@@ -1,3 +1,12 @@
+
+function isValidUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch (e) {
+    return false;
+  }
+}
 import MetaMaskOnboarding from '@metamask/onboarding';
 import { ethers } from 'ethers';
 import {
@@ -279,6 +288,11 @@ const detectEip6963 = () => {
 };
 
 export const setActiveProviderDetail = async (providerDetail) => {
+  // Validate the 'icon' property to ensure it is a safe URL
+  if (providerDetail?.info?.icon && !isValidUrl(providerDetail.info.icon)) {
+    console.warn('Invalid icon URL detected:', providerDetail.info.icon);
+    providerDetail.info.icon = '';
+  }
   closeProvider();
   // When the extension is not installed the providerDetails comes in undefined
   // but because the SDK is already init the window.ethereum has been injected
@@ -302,9 +316,16 @@ export const setActiveProviderDetail = async (providerDetail) => {
   const { uuid, name, icon } = providerDetail.info;
   activeProviderUUIDResult.innerText = uuid;
   activeProviderNameResult.innerText = name;
-  activeProviderIconResult.innerHTML = icon
-    ? `<img src="${icon}" height="90" width="90" />`
-    : '';
+  if (icon) {
+    const imgElement = document.createElement('img');
+    imgElement.src = icon;
+    imgElement.height = 90;
+    imgElement.width = 90;
+    activeProviderIconResult.innerHTML = '';
+    activeProviderIconResult.appendChild(imgElement);
+  } else {
+    activeProviderIconResult.innerHTML = '';
+  }
   updateFormElements();
 };
 
